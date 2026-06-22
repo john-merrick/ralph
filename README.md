@@ -1,7 +1,5 @@
 # Ralph
 
-![Ralph](ralph.webp)
-
 Ralph is an autonomous AI agent loop that runs AI coding tools ([Amp](https://ampcode.com) or [Claude Code](https://docs.anthropic.com/en/docs/claude-code)) repeatedly until all PRD items are complete. Each iteration is a fresh instance with clean context. Memory persists via git history, `progress.txt`, and `prd.json`.
 
 This fork adds a **[control layer](#control-layer)** beside the loop (`ralph.sh` unchanged): skip-then-block escalation, an audit that doubles as a morning rundown, attributable cost tracking with forecasts, `/add-feature`, and one-command scheduling.
@@ -20,22 +18,26 @@ Based on [Geoffrey Huntley's Ralph pattern](https://ghuntley.com/ralph/).
 
 ## Setup
 
-### Option 1: Copy to your project
+### Option 1: Copy the `template/` starter kit (recommended)
 
-Copy the ralph files into your project:
+`template/` is a self-contained, copy-paste kit — the loop plus the control
+layer, claude-only, no demo files. Drop its contents into your project root:
 
 ```bash
-# From your project root
-mkdir -p scripts/ralph
-cp /path/to/ralph/ralph.sh scripts/ralph/
-
-# Copy the prompt template for your AI tool of choice:
-cp /path/to/ralph/prompt.md scripts/ralph/prompt.md    # For Amp
-# OR
-cp /path/to/ralph/CLAUDE.md scripts/ralph/CLAUDE.md    # For Claude Code
-
-chmod +x scripts/ralph/ralph.sh
+cp -r /path/to/ralph/template/. /path/to/your-project/
+cd /path/to/your-project
+cp prd.json.example prd.json     # then edit branchName + items
+./ralph run 10                   # run the loop (tagged + writes a rundown)
+./ralph audit                    # morning rundown
 ```
+
+`cost_hook.py` is wired via `$CLAUDE_PROJECT_DIR/cost_hook.py`, so the files
+must sit at the project root (they do, after the copy above). The runtime
+artifacts (`cost.jsonl`, `rundown/`, `archive/`, `.last-branch`) are gitignored
+by the kit. See `template/README.md` for the per-file breakdown.
+
+> Using Amp instead of Claude Code? The template ships `CLAUDE.md` only. Also
+> copy `prompt.md` from this repo and run with `--tool amp`.
 
 ### Option 2: Install skills globally (Amp)
 
@@ -112,14 +114,16 @@ This creates `prd.json` with user stories structured for autonomous execution.
 ### 3. Run Ralph
 
 ```bash
-# Using Amp (default)
-./scripts/ralph/ralph.sh [max_iterations]
+# Using Claude Code (template default)
+./ralph.sh [max_iterations]
 
-# Using Claude Code
-./scripts/ralph/ralph.sh --tool claude [max_iterations]
+# Using Amp
+./ralph.sh --tool amp [max_iterations]
 ```
 
-Default is 10 iterations. Use `--tool amp` or `--tool claude` to select your AI coding tool.
+Default is 10 iterations. Use `--tool amp` or `--tool claude` to select your AI
+coding tool. Prefer `./ralph run [max_iterations]` to also tag the run and write
+a dated rundown (see [Control Layer](#control-layer)).
 
 Ralph will:
 1. Create a feature branch (from PRD `branchName`)
@@ -167,7 +171,7 @@ Tests: `python3 -m unittest discover -s tests`
 | `skills/prd/` | Skill for generating PRDs (works with Amp and Claude Code) |
 | `skills/ralph/` | Skill for converting PRDs to JSON (works with Amp and Claude Code) |
 | `.claude-plugin/` | Plugin manifest for Claude Code marketplace discovery |
-| `flowchart/` | Interactive visualization of how Ralph works |
+| `template/` | Self-contained, copy-paste starter kit (see Setup → Option 1) |
 | **Control layer** | |
 | `ralph` | Dispatcher: `audit` · `cost` · `schedule` · `run` |
 | `project_audit.py` | The `audit` rundown |
@@ -177,20 +181,6 @@ Tests: `python3 -m unittest discover -s tests`
 | `ralph-run.sh` | Launch wrapper: tags `RALPH_RUN_ID`, dumps dated rundown |
 | `skills/add-feature/` | Skill to append work mid-run |
 | `ralph_prd.py` | Shared `prd.json` loader (field defaults, selection logic) |
-
-## Flowchart
-
-[![Ralph Flowchart](ralph-flowchart.png)](https://snarktank.github.io/ralph/)
-
-**[View Interactive Flowchart](https://snarktank.github.io/ralph/)** - Click through to see each step with animations.
-
-The `flowchart/` directory contains the source code. To run locally:
-
-```bash
-cd flowchart
-npm install
-npm run dev
-```
 
 ## Critical Concepts
 

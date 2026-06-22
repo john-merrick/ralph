@@ -7,8 +7,8 @@ progress.txt
 cost.jsonl
 rundown/
 
-# Archive is optional to commit
-# archive/
+# Loop run archives (generated during runs)
+archive/
 
 # OS files
 .DS_Store
